@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>Animal Cube Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+        body {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .bubble {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            font-size: 12px;
+            color: #333;
+            border: 2px solid white;
+            pointer-events: none;
+        }
+
+        .bubble .avatar {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        @keyframes intro-pop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+        }
+
+        @keyframes scroll-horizontal {
+            0% {
+                transform: translateX(0%);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .marquee-container {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 280px;
+            height: 60px;
+            padding: 0 10px;
+            background-color: #ffe9c6;
+            border-radius: 9999px;
+            border: 2px solid rgba(0, 0, 0, 0.5);
+            box-shadow: inset 0 0 0 2px #f2cda0;
+            overflow: hidden;
+        }
+
+        .marquee-track {
+            display: flex;
+            animation: scroll-horizontal 20s linear infinite;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .marquee-track img {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            border-radius: 9999px;
+            border: 2px solid #e8dfd1;
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 9999px;
+            pointer-events: none;
+            opacity: 0.8;
+            animation: sparkle-fade 0.6s ease-out forwards;
+        }
+
+        @keyframes sparkle-fade {
+            0% {
+                transform: scale(1) translate(0, 0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.5) translate(var(--dx), var(--dy));
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-white flex justify-center items-center min-h-screen p-4">
+    <div class="relative w-[350px] h-[750px] rounded-md overflow-hidden select-none"
+        style="background: linear-gradient(to bottom, #fef6e4 0%, #f3d2c1 100%)">
+        <div id="purple-box"
+            class="absolute top-6 left-1/2 -translate-x-1/2 w-[300px] h-[400px] bg-[#cddafd] bg-opacity-90 border border-black border-opacity-20 rounded-md"
+            style="box-shadow: inset 0 0 0 2px #a1bdf4;">
+            <div id="bubble-overlay" class="absolute inset-0 overflow-hidden"></div>
+        </div>
+
+        <div class="absolute bottom-[240px] left-1/2 -translate-x-1/2 text-white text-xl drop-shadow-lg select-none text-center px-2"
+            style="text-shadow: 2px 2px 0 #00000080; background-color: rgba(255, 193, 7, 0.15); border: 2px dashed #ffc107; padding: 8px; border-radius: 8px; width: 300px;">
+            KETIK NAMA KALIAN DI KOMENTAR
+        </div>
+
+
+
+        <div class="absolute bottom-[200px] left-1/2 -translate-x-1/2 text-white text-sm font-bold tracking-wide whitespace-nowrap"
+            style="text-shadow: 1px 1px 0px #00000080;">
+            DAFTAR KARAKTER ANOMALI:
+        </div>
+
+        <div class="absolute bottom-[120px] left-1/2 transform -translate-x-1/2 marquee-container">
+            <div class="marquee-track">
+                <img src="static/images/bobrito_bandito.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/boneca_ambalabu.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/brr_prr_patapim.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/capuccino_assassino.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/frigo_camelo.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/makakini_bananini.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/matteo.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/orangutini_ananasini.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/bobrito_bandito.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/boneca_ambalabu.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/brr_prr_patapim.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/capuccino_assassino.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/frigo_camelo.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/makakini_bananini.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/matteo.png" class="w-8 h-8 rounded-full object-contain" />
+                <img src="static/images/orangutini_ananasini.png" class="w-8 h-8 rounded-full object-contain" />
+            </div>
+        </div>
+
+        <button id="fullscreen-btn" onclick="toggleFullscreen()"
+            class="absolute top-2 right-2 bg-yellow-300 text-black text-lg px-3 py-1 rounded-full shadow hover:bg-yellow-400 z-50 transition-opacity duration-500"
+            style="opacity: 1;">
+            <i id="fullscreen-icon" class="fas fa-expand"></i>
+        </button>
+
+
+        <div class="absolute bottom-[50px] left-1/2 -translate-x-1/2 flex gap-2 items-center"
+            style="width: 300px; justify-content: center;">
+            <input id="nameInput" type="text" maxlength="8" placeholder="Masukkan nama"
+                class="flex-1 px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 shadow"
+                style="font-family: 'Fredoka One', cursive;" />
+            <button onclick="handleSubmit()"
+                class="px-4 py-2 bg-yellow-300 text-black rounded-md font-bold hover:bg-yellow-400 shadow">
+                Kirim
+            </button>
+        </div>
+
+
+
+    </div>
+
+    <script>
+
+        console.log("✅ Script aktif!");
+
+        let names = [];
+
+        let isProcessing = false;
+
+        async function pollAndRun() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            try {
+                const res = await fetch('/names');
+                const names = await res.json();
+
+                if (names.length > 0) {
+                    for (const name of names) {
+                        await createBubble(name);
+
+                        // Hapus dari server
+                        await fetch('/remove_name', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name })
+                        });
+
+                        await new Promise(r => setTimeout(r, 2500)); // jeda antar nama
+                    }
+                }
+            } catch (err) {
+                console.error('Gagal memuat data nama:', err);
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        // Polling berulang setiap 10 detik
+        setInterval(pollAndRun, 10000);
+
+        // Juga jalankan saat pertama kali halaman dibuka
+        window.addEventListener('load', pollAndRun);
+
+
+
+        const bubbleOverlay = document.getElementById('bubble-overlay');
+        const bubbleColors = [
+            '#f9dcc4', '#d9f2dd', '#bae6fd', '#d8b4fe', '#ffe5ec',
+            '#fde2e4', '#fcefe6', '#cfe8f9', '#e0f7fa', '#fff1c1'
+        ];
+
+        const avatars = [
+            'static/images/bobrito_bandito.png',
+            'static/images/boneca_ambalabu.png',
+            'static/images/brr_prr_patapim.png',
+            'static/images/capuccino_assassino.png',
+            'static/images/frigo_camelo.png',
+            'static/images/makakini_bananini.png',
+            'static/images/matteo.png',
+            'static/images/orangutini_ananasini.png',
+            'static/images/tung_tung_tung_sahur.png',
+            'static/images/u_din_din_din_din_dun.png'
+        ];
+
+        function getRandomAvatar() {
+            return avatars[Math.floor(Math.random() * avatars.length)];
+        }
+
+        function getRandomBubbleColor() {
+            return bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
+        }
+
+        function spawnMovingBubble(name, avatarSrc) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.backgroundColor = getRandomBubbleColor();
+
+            const avatar = document.createElement('img');
+            avatar.className = 'avatar';
+            avatar.src = avatarSrc;
+            avatar.style.width = '36px';
+            avatar.style.height = '36px';
+            avatar.style.objectFit = 'contain';
+
+            const nameText = document.createElement('div');
+            nameText.textContent = name;
+
+            bubble.appendChild(avatar);
+            bubble.appendChild(nameText);
+            bubbleOverlay.appendChild(bubble);
+
+            const boxW = bubbleOverlay.clientWidth;
+            const boxH = bubbleOverlay.clientHeight;
+            let x = Math.random() * (boxW - 80);
+            let y = Math.random() * (boxH - 60);
+            let dx = (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.5);
+            let dy = (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.5);
+
+            function move() {
+                const bW = bubble.offsetWidth;
+                const bH = bubble.offsetHeight;
+
+                if (x <= 0 || x + bW >= boxW) dx *= -1;
+                if (y <= 0 || y + bH >= boxH) dy *= -1;
+
+                x += dx;
+                y += dy;
+
+                const shakeX = (Math.random() - 0.5) * 2;
+                const shakeY = (Math.random() - 0.5) * 2;
+
+                bubble.style.left = `${x}px`;
+                bubble.style.top = `${y}px`;
+                bubble.style.transform = `translate(${shakeX}px, ${shakeY}px)`;
+
+                requestAnimationFrame(move);
+            }
+
+            bubble.style.left = `${x}px`;
+            bubble.style.top = `${y}px`;
+            requestAnimationFrame(move);
+        }
+
+        async function createBubble(name) {
+            return new Promise(async (resolve) => {
+                const avatarPath = getRandomAvatar();
+                const introBubble = document.createElement('div');
+                introBubble.className = 'bubble';
+                introBubble.style.position = 'fixed';
+
+                const purpleBox = document.getElementById('purple-box');
+                const boxRect = purpleBox.getBoundingClientRect();
+
+                introBubble.style.left = `${boxRect.left + boxRect.width / 2}px`;
+                introBubble.style.top = `${boxRect.top + boxRect.height / 2}px`;
+                introBubble.style.transform = 'translate(-50%, -50%) scale(1)';
+                introBubble.style.opacity = '0';
+                introBubble.style.fontSize = '18px';
+                introBubble.style.padding = '10px 14px';
+                introBubble.style.zIndex = '50';
+                introBubble.style.animation = 'intro-pop 0.6s ease-out forwards';
+                introBubble.style.backgroundColor = getRandomBubbleColor();
+
+                const avatar = document.createElement('img');
+                avatar.className = 'avatar';
+                avatar.src = avatarPath;
+                avatar.style.width = '40px';
+                avatar.style.height = '40px';
+                avatar.style.objectFit = 'contain';
+
+                const nameText = document.createElement('div');
+                nameText.textContent = name;
+
+                introBubble.appendChild(avatar);
+                introBubble.appendChild(nameText);
+                document.body.appendChild(introBubble);
+
+                const rect = introBubble.getBoundingClientRect();
+                createSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+                await generateAndPlayAudio(name, avatarPath);
+
+                introBubble.remove();
+                spawnMovingBubble(name, avatarPath);
+                resolve();
+            });
+        }
+
+        function generateAndPlayAudio(name, avatarPath) {
+            return new Promise(async (resolve) => {
+                const apiKey = 'sk_e8accf4b816cbb3e4750ca45f456ab77ff0c0171fac09a89';
+                const voiceId = 'pNInz6obpgDQGcFmaJgB';
+                const elevenText = `Hai ${name}, Karakter kamu.`;
+                const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'xi-api-key': apiKey,
+                            'Content-Type': 'application/json',
+                            'Accept': 'audio/mpeg'
+                        },
+                        body: JSON.stringify({
+                            text: elevenText,
+                            model_id: 'eleven_multilingual_v2',
+                            voice_settings: {
+                                stability: 0.5,
+                                similarity_boost: 0.75
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        console.warn('ElevenLabs response not OK');
+                        return resolve();
+                    }
+
+                    const blob = await response.blob();
+                    const audioUrl = URL.createObjectURL(blob);
+                    const audioElement = new Audio(audioUrl);
+
+                    audioElement.addEventListener('ended', () => {
+                        playExtraAudio(avatarPath).then(resolve);
+                    });
+
+                    audioElement.play();
+                } catch (error) {
+                    console.error('Gagal menghasilkan audio ElevenLabs:', error);
+                    resolve();
+                }
+            });
+        }
+
+        function playExtraAudio(avatarPath) {
+            return new Promise((resolve) => {
+                let path = '';
+                if (avatarPath.includes('bobrito_bandito')) path = 'static/sounds/bobrito.mp3';
+                else if (avatarPath.includes('boneca_ambalabu')) path = 'static/sounds/boneca.mp3';
+                else if (avatarPath.includes('brr_prr_patapim')) path = 'static/sounds/brrbrr.mp3';
+                else if (avatarPath.includes('capuccino_assassino')) path = 'static/sounds/capuccino.mp3';
+                else if (avatarPath.includes('frigo_camelo')) path = 'static/sounds/frigo.mp3';
+                else if (avatarPath.includes('makakini_bananini')) path = 'static/sounds/makakini.mp3';
+                else if (avatarPath.includes('matteo')) path = 'static/sounds/matteo.mp3';
+                else if (avatarPath.includes('orangutini_ananasini')) path = 'static/sounds/orangutini.mp3';
+                else if (avatarPath.includes('tung_tung_tung_sahur')) path = 'static/sounds/tungtung.mp3';
+                else if (avatarPath.includes('u_din_din_din_din_dun')) path = 'static/sounds/udindin.mp3';
+                else return resolve();
+
+                const audio = new Audio(path);
+                audio.addEventListener('ended', resolve);
+                audio.addEventListener('error', resolve);
+                audio.play();
+            });
+        }
+
+        async function runSequentially() {
+            for (const name of names) {
+                await createBubble(name);
+                await new Promise(r => setTimeout(r, 2500));
+            }
+        }
+
+        function createSparkles(x, y) {
+            const sparkleColors = ['#fff', '#fce4ec', '#e0f7fa', '#fffbcc', '#e8f5e9'];
+
+            for (let i = 0; i < 10; i++) {
+                const s = document.createElement('div');
+                s.className = 'sparkle';
+                const color = sparkleColors[Math.floor(Math.random() * sparkleColors.length)];
+                const angle = Math.random() * 2 * Math.PI;
+                const distance = 20 + Math.random() * 20;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+
+                s.style.background = color;
+                s.style.left = `${x}px`;
+                s.style.top = `${y}px`;
+                s.style.setProperty('--dx', `${dx}px`);
+                s.style.setProperty('--dy', `${dy}px`);
+
+                document.body.appendChild(s);
+                setTimeout(() => s.remove(), 600);
+            }
+        }
+
+        function toggleFullscreen() {
+            const elem = document.documentElement;
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen?.() || elem.webkitRequestFullscreen?.() || elem.msRequestFullscreen?.();
+            } else {
+                document.exitFullscreen?.() || document.webkitExitFullscreen?.() || document.msExitFullscreen?.();
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const icon = document.getElementById('fullscreen-icon');
+            const btn = document.getElementById('fullscreen-btn');
+            const isFullscreen = !!document.fullscreenElement;
+
+            icon.classList.toggle('fa-expand', !isFullscreen);
+            icon.classList.toggle('fa-compress', isFullscreen);
+            btn.style.opacity = isFullscreen ? '0.25' : '1';
+        });
+
+        // Inisiasi script setelah halaman siap
+        // window.addEventListener('load', loadNamesFromTxt);
+
+
+
+
+    </script>
+
+</body>
+
+</html>

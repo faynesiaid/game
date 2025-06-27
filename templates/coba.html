@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Uji Suara SpeechSynthesis</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 12px;
+    }
+    .lang {
+      font-weight: bold;
+      color: #007acc;
+    }
+    button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Daftar Voice SpeechSynthesis</h1>
+  <ul id="voiceList">
+    <li>Memuat suara...</li>
+  </ul>
+
+  <script>
+    function loadVoices() {
+      const voiceList = document.getElementById("voiceList");
+      const voices = window.speechSynthesis.getVoices();
+
+      voiceList.innerHTML = ""; // Bersihkan isi awal
+
+      if (voices.length === 0) {
+        voiceList.innerHTML = "<li>Tidak ada voice yang tersedia.</li>";
+        return;
+      }
+
+      voices.forEach((voice, index) => {
+        const listItem = document.createElement("li");
+
+        // Buat tombol uji
+        const button = document.createElement("button");
+        button.textContent = "Uji Suara";
+        button.addEventListener("click", () => {
+          const utterance = new SpeechSynthesisUtterance(
+            "Halo! Ini adalah suara " + voice.name + ". Saya bisa berbicara bahasa " + voice.lang
+          );
+          utterance.voice = voice;
+          speechSynthesis.speak(utterance);
+        });
+
+        listItem.innerHTML = `
+          <span class="lang">${voice.lang}</span> — ${voice.name} ${voice.default ? "(default)" : ""}
+        `;
+        listItem.appendChild(button);
+        voiceList.appendChild(listItem);
+      });
+
+      console.log("Available voices:", voices);
+    }
+
+    // Jalankan saat halaman dimuat
+    loadVoices();
+
+    // Refresh saat voices berubah
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  </script>
+</body>
+</html>
